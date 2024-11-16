@@ -1,9 +1,6 @@
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
-import seaborn as sns
 import pandas as pd
-import numpy as np
-#import tarfile
 import csv
 import os
 
@@ -61,9 +58,6 @@ for root, dirs, files in os.walk(folder_path):
                     if area_elem:
                         area_text = area_elem.text.strip()
                         if area_text:
-                            #boarea = area_text.split()[0]
-                            #biarea_elem = area_elem.find('span', class_='listing-card__attribute--normal-weight')
-                            #biarea = biarea_elem.text.strip().replace('m²', '').replace('+', '').strip() if biarea_elem else ''
                             
                             boarea_biarea = area_text.split()
                             boarea = boarea_biarea[0]  #first part is boarea
@@ -114,3 +108,76 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as f:
     writer.writerows(data)   #write the data rows
 
 print(f"Data written to {csv_file}.")
+
+#Problem2
+
+#read the CSV file
+df = pd.read_csv('property_data.csv')
+#function to convert Swedish month names to numbers
+def swedish_month_to_number(month):
+    months = {
+        'januari': '01', 'februari': '02', 'mars': '03', 'april': '04',
+        'maj': '05', 'juni': '06', 'juli': '07', 'augusti': '08',
+        'september': '09', 'oktober': '10', 'november': '11', 'december': '12'
+    }
+    return months.get(month.lower(), month)
+
+#preprocess the 'Date' column
+df['Date'] = df['Date'].str.replace('Såld ', '', regex=False)
+df['Date'] = df['Date'].apply(lambda x: ' '.join([x.split()[0], swedish_month_to_number(x.split()[1]), x.split()[2]]))
+
+#convert 'Date' column to datetime
+df['Date'] = pd.to_datetime(df['Date'], format='%d %m %Y')
+
+#create a copy of selected houses sold in 2022
+df_2022 = df[df['Date'].dt.year == 2022].copy()
+
+#set values
+df_2022.loc[:, 'Boarea'] = pd.to_numeric(df_2022['Boarea'], errors='coerce')
+df_2022.loc[:, 'Rooms'] = pd.to_numeric(df_2022['Rooms'], errors='coerce')
+df_2022.loc[:, 'Closing_Price'] = pd.to_numeric(df_2022['Closing_Price'].replace(r'[^\d.]', '', regex=True))
+
+
+#convert Closing_Price to numeric, removing any non-numeric characters
+df_2022['Closing_Price'] = pd.to_numeric(df_2022['Closing_Price'].replace(r'[^\d.]', '', regex=True))
+
+#convert Boarea to numeric
+df_2022['Boarea'] = pd.to_numeric(df_2022['Boarea'], errors='coerce')
+
+#convert Rooms to numeric
+df_2022['Rooms'] = pd.to_numeric(df_2022['Rooms'], errors='coerce')
+
+#compute five-number summary
+summary = df_2022['Closing_Price'].describe()
+print("Five-number summary of closing prices:")
+print(summary[['min', '25%', '50%', '75%', 'max']])
+
+#construct histogram of closing prices
+plt.figure(figsize=(10, 6))
+plt.hist(df_2022['Closing_Price'], bins=30, edgecolor='red')
+plt.title('Histogram of Closing Prices (2022)')
+plt.xlabel('Closing Price')
+plt.ylabel('Frequency')
+plt.savefig('closing_prices_histogram.png')
+plt.close()
+
+#construct scatter plot of closing price vs boarea
+plt.figure(figsize=(10, 6))
+plt.scatter(df_2022['Boarea'], df_2022['Closing_Price'])
+plt.title('Closing Price vs Boarea (2022)')
+plt.xlabel('Boarea')
+plt.ylabel('Closing Price')
+plt.savefig('closing_price_vs_boarea.png')
+plt.close()
+
+#construct scatter plot with color based on number of rooms
+plt.figure(figsize=(10, 6))
+scatter = plt.scatter(df_2022['Boarea'], df_2022['Closing_Price'], c=df_2022['Rooms'], cmap='viridis')
+plt.colorbar(scatter, label='Number of Rooms')
+plt.title('Closing Price vs Boarea, Colored by Number of Rooms (2022)')
+plt.xlabel('Boarea')
+plt.ylabel('Closing Price')
+plt.savefig('closing_price_vs_boarea_colored.png')
+plt.close()
+
+print("All plots have been saved.")
