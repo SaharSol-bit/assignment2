@@ -52,7 +52,7 @@ for root, dirs, files in os.walk(folder_path):
                     location_elem = entry.find('div', class_='sold-property-listing__location')
                     if location_elem:
                         location_parts = location_elem.text.strip().split('\n')
-                        location = location_parts[-1].strip()  #get the last line containing the location
+                        location = location_parts[-2].strip()  #get the last line containing the location
                     else:
                         location = ''
                     
@@ -61,15 +61,21 @@ for root, dirs, files in os.walk(folder_path):
                     if area_elem:
                         area_text = area_elem.text.strip()
                         if area_text:
-                            boarea = area_text.split()[0]
-                            biarea_elem = area_elem.find('span', class_='listing-card__attribute--normal-weight')
-                            biarea = biarea_elem.text.strip().replace('m²', '').replace('+', '').strip() if biarea_elem else ''
+                            #boarea = area_text.split()[0]
+                            #biarea_elem = area_elem.find('span', class_='listing-card__attribute--normal-weight')
+                            #biarea = biarea_elem.text.strip().replace('m²', '').replace('+', '').strip() if biarea_elem else ''
+                            
+                            boarea_biarea = area_text.split()
+                            boarea = boarea_biarea[0]  #first part is boarea
+                            biarea = boarea_biarea[2] if len(boarea_biarea) > 2 else '0'  #second part after '+' is biarea
+                                
                             rooms = area_text.split()[-2] if 'rum' in area_text else ''
                         else:
                             boarea = biarea = rooms = ''
                     else:
                         boarea = biarea = rooms = ''
-                    
+                        
+
                     #calculate Total Area
                     try:
                         boarea_val = int(boarea) if boarea else 0
@@ -86,11 +92,19 @@ for root, dirs, files in os.walk(folder_path):
                     else:
                         price = ''
                     
+                    #extract Tomt area
+                    tomt_elem = entry.find('div', class_='sold-property-listing__land-area')
+                    if tomt_elem:
+                        tomt_text = tomt_elem.text.strip()
+                        tomt = tomt_text.replace('tomt', '').replace('m²', '').strip()
+                    else: 
+                        tomt_elem= ''
+                    
                     #append extracted data to the list
-                    data.append([date, address, location, boarea, biarea, totalarea, rooms, price])
+                    data.append([date, address, location, boarea, biarea, totalarea, rooms, tomt, price])
 
 #define the header for the CSV file
-header = ['Date', 'Address', 'Location', 'Boarea', 'Biarea', 'Totalarea', 'Rooms', 'Price']
+header = ['Date', 'Address', 'Location', 'Boarea', 'Biarea', 'Totalarea', 'Rooms','Tomt_area', 'Closing_Price']
 
 #write the extracted data to a CSV file
 csv_file = 'property_data.csv'
