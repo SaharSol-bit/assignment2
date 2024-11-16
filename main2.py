@@ -46,7 +46,12 @@ for root, dirs, files in os.walk(folder_path):
                 
                 #Extract Location
                 location_elem = soup.find('div', class_='sold-property-listing__location')  
-                location = location_elem.text.strip() if location_elem else ''
+                if location_elem:
+                    # Extract specific location text
+                    location_parts = location_elem.text.strip().split('\n')  # Split into lines
+                    location = location_parts[-1].strip()  # Get the last line containing the location
+                else:
+                    location = ''  # If no location found
                 
                 #Extract Boarea (Living Area)
                 #boarea_elem = soup.find('div', class_='sold-property-listing__land-area')  
@@ -97,9 +102,12 @@ for root, dirs, files in os.walk(folder_path):
                 #rooms = rooms_elem.text.strip() if rooms_elem else ''
                 
                 #Extract the Closing Price
-                price_elem = soup.find('span', class_='hcl-text hcl-text--medium')  
-                price = price_elem.text.strip().replace('kr', '').replace(' ', '').replace('\u00a0', '') if price_elem else ''
-                
+                price_elem = soup.find('span', class_='hcl-text hcl-text--medium')
+                if price_elem:
+                    price_text = price_elem.text.strip()
+                    price = price_text.replace('Slutpris', '').replace('kr', '').replace(' ', '').replace('\u00a0', '')
+                else:
+                    price = ''
                 #Append the extracted data as a list to the 'data' list
                 data.append([date, address, location, boarea, biarea, totalarea, rooms, price])
 
