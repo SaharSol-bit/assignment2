@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import pandas as pd
+import numpy as np
 import csv
 import os
 
@@ -153,8 +154,9 @@ print("Five-number summary of closing prices:")
 print(summary[['min', '25%', '50%', '75%', 'max']])
 
 #construct histogram of closing prices
+n_bins = int(1 + 3.322 * np.log10(len(df_2022)))
 plt.figure(figsize=(10, 6))
-plt.hist(df_2022['Closing_Price'], bins=30, edgecolor='red')
+plt.hist(df_2022['Closing_Price'], bins=n_bins, edgecolor='red')
 plt.title('Histogram of Closing Prices (2022)')
 plt.xlabel('Closing Price')
 plt.ylabel('Frequency')
